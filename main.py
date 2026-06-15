@@ -164,3 +164,6 @@ def events_list(request: Request):
         html += f"<tr><td>{row[0]}</td><td>{row[1]}</td><td>{row[3] or ''}</td><td>{link_html}</td></tr>"
     html += "</table><br><a href='/'>Назад</a></body></html>"
     return html
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
