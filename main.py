@@ -124,12 +124,8 @@ def delete_event(title: str, start: str):
         "DELETE FROM events WHERE title = ? AND start_time = ?",
         (title, start)
     )
-    deleted = cursor.rowcount
     conn.commit()
     conn.close()
-
-    if deleted == 0:
-        raise HTTPException(status_code=404, detail="Задача не найдена")
     return {"status": "ok"}
 
 
@@ -137,7 +133,7 @@ def delete_event(title: str, start: str):
 def events_list(request: Request):
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
-    cursor.execute("SELECT title, start_time, end_time, location, notify, favorite, link FROM events ORDER BY start_time")
+    cursor.execute("SELECT title, start_time, end_time, location, link FROM events ORDER BY start_time")
     rows = cursor.fetchall()
     conn.close()
 
@@ -160,10 +156,7 @@ def events_list(request: Request):
             <tr><th>Название</th><th>Начало</th><th>Место</th><th>Ссылка</th></tr>
     """
     for row in rows:
-        link_html = f'<a href="{row[6]}" target="_blank">Подробнее</a>' if row[6] else ''
+        link_html = f'<a href="{row[4]}" target="_blank">Подробнее</a>' if row[4] else ''
         html += f"<tr><td>{row[0]}</td><td>{row[1]}</td><td>{row[3] or ''}</td><td>{link_html}</td></tr>"
     html += "</table><br><a href='/'>Назад</a></body></html>"
     return html
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)

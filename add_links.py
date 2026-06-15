@@ -22,4 +22,4 @@ cursor.executemany("""
 conn.commit()
 conn.close()
 
-print(f"Добавлено {len(events)} мероприятий со ссылками.")
+print("Добавлено мероприятия со ссылками.")

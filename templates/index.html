@@ -218,10 +218,13 @@
                                 var start = event.start.replace('T', ' ');
                                 var end = event.end ? event.end.replace('T', ' ') : 'Не указано';
                                 var location = event.location || 'Не указано';
+                                var link = event.link || '';
                                 message += (index + 1) + '. ' + event.title + '\n';
                                 message += '   Начало: ' + start + '\n';
                                 message += '   Окончание: ' + end + '\n';
-                                message += '   Место: ' + location + '\n\n';
+                                message += '   Место: ' + location + '\n';
+                                if (link) message += '   Ссылка: ' + link + '\n';
+                                message += '\n';
                             });
                             alert(message);
                         });
@@ -233,10 +236,12 @@
                     var isFav = info.event.extendedProps.favorite ? 'Да' : 'Нет';
                     var start = info.event.startStr.replace('T', ' ');
                     var end = info.event.endStr ? info.event.endStr.replace('T', ' ') : 'Не указано';
+                    var link = info.event.extendedProps.link || '';
                     var message = 'Название: ' + info.event.title + '\n';
                     message += 'Начало: ' + start + '\n';
                     message += 'Окончание: ' + end + '\n';
                     message += 'Место: ' + location + '\n';
+                    if (link) message += 'Ссылка: ' + link + '\n';
                     message += 'В избранном: ' + isFav + '\n\n';
                     message += 'ОК - добавить/убрать из избранного\n';
                     message += 'Отмена - закрыть';
@@ -268,8 +273,11 @@
                 eventContent: function(arg) {
                     var notifyBadge = arg.event.extendedProps.notify ? '<span class="notify-badge">🔔</span>' : '';
                     var favBadge = arg.event.extendedProps.favorite ? '<span class="favorite-badge">⭐</span>' : '';
+                    var title = arg.event.title;
+                    var link = arg.event.extendedProps.link || '';
+                    var titleHtml = link ? '<a href="' + link + '" target="_blank" style="color: blue; text-decoration: underline;">' + title + '</a>' : title;
                     return {
-                        html: '<b>' + arg.event.title + '</b>' + notifyBadge + favBadge
+                        html: '<b>' + titleHtml + '</b>' + notifyBadge + favBadge
                     };
                 },
 
@@ -286,11 +294,13 @@
                                 end: ev.endStr,
                                 location: ev.extendedProps.location,
                                 notify: ev.extendedProps.notify,
-                                favorite: ev.extendedProps.favorite
+                                favorite: ev.extendedProps.favorite,
+                                link: ev.extendedProps.link
                             });
                         } else {
                             existing.favorite = ev.extendedProps.favorite;
                             existing.notify = ev.extendedProps.notify;
+                            existing.link = ev.extendedProps.link;
                         }
                     });
                     updateCounters();
