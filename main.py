@@ -15,7 +15,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-templates = Jinja2Templates(directory="templates")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 
 DB_NAME = "calendar.db"
 
@@ -31,11 +32,12 @@ def init_db():
             end_time TEXT,
             location TEXT,
             notify INTEGER DEFAULT 0,
-            favorite INTEGER DEFAULT 0
+            favorite INTEGER DEFAULT 0,
+            link TEXT
         )
     """)
     try:
-        cursor.execute("ALTER TABLE events ADD COLUMN favorite INTEGER DEFAULT 0")
+        cursor.execute("ALTER TABLE events ADD COLUMN link TEXT")
     except:
         pass
     conn.commit()
@@ -52,6 +54,7 @@ class Event(BaseModel):
     location: str | None = None
     notify: int = 0
     favorite: int = 0
+    link: str | None = None
 
 
 class FavoriteUpdate(BaseModel):
@@ -69,7 +72,7 @@ def read_root(request: Request):
 def get_events():
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
-    cursor.execute("SELECT title, start_time, end_time, location, notify, favorite FROM events")
+    cursor.execute("SELECT title, start_time, end_time, location, notify, favorite, link FROM events")
     rows = cursor.fetchall()
     conn.close()
 
@@ -81,28 +84,8 @@ def get_events():
             "end": row[2],
             "location": row[3],
             "notify": row[4],
-            "favorite": row[5]
-        })
-    return events_list
-
-
-@app.get("/api/events/favorites")
-def get_favorite_events():
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute("SELECT title, start_time, end_time, location, notify, favorite FROM events WHERE favorite = 1")
-    rows = cursor.fetchall()
-    conn.close()
-
-    events_list = []
-    for row in rows:
-        events_list.append({
-            "title": row[0],
-            "start": row[1],
-            "end": row[2],
-            "location": row[3],
-            "notify": row[4],
-            "favorite": row[5]
+            "favorite": row[5],
+            "link": row[6]
         })
     return events_list
 
@@ -112,8 +95,8 @@ def create_event(event: Event):
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     cursor.execute(
-        "INSERT INTO events (title, start_time, end_time, location, notify, favorite) VALUES (?, ?, ?, ?, ?, ?)",
-        (event.title, event.start, event.end, event.location, event.notify, event.favorite)
+        "INSERT INTO events (title, start_time, end_time, location, notify, favorite, link) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        (event.title, event.start, event.end, event.location, event.notify, event.favorite, event.link)
     )
     conn.commit()
     conn.close()
@@ -154,7 +137,7 @@ def delete_event(title: str, start: str):
 def events_list(request: Request):
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
-    cursor.execute("SELECT title, start_time, end_time, location, notify, favorite FROM events ORDER BY start_time")
+    cursor.execute("SELECT title, start_time, end_time, location, notify, favorite, link FROM events ORDER BY start_time")
     rows = cursor.fetchall()
     conn.close()
 
@@ -174,11 +157,10 @@ def events_list(request: Request):
     <body>
         <h1>Список мероприятий</h1>
         <table>
-            <tr><th>Название</th><th>Начало</th><th>Место</th><th>Избранное</th><th>Уведомление</th></tr>
+            <tr><th>Название</th><th>Начало</th><th>Место</th><th>Ссылка</th></tr>
     """
     for row in rows:
-        fav_text = "Да" if row[5] else "Нет"
-        notif_text = "Да" if row[4] else "Нет"
-        html += f"<tr><td>{row[0]}</td><td>{row[1]}</td><td>{row[3] or ''}</td><td>{fav_text}</td><td>{notif_text}</td></tr>"
+        link_html = f'<a href="{row[6]}" target="_blank">Подробнее</a>' if row[6] else ''
+        html += f"<tr><td>{row[0]}</td><td>{row[1]}</td><td>{row[3] or ''}</td><td>{link_html}</td></tr>"
     html += "</table><br><a href='/'>Назад</a></body></html>"
     return html
